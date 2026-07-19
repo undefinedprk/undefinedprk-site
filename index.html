@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jordan Lee — Notebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EFEAE0;
+    --paper-light: #FAF7F0;
+    --paper-dark: #E4DECE;
+    --ink: #21263A;
+    --ink-soft: #565C74;
+    --teal: #1F6F6B;
+    --teal-soft: #E4EEEC;
+    --ochre: #C97A2B;
+    --ochre-soft: #F5E9D8;
+    --rose: #B65C6B;
+    --rose-soft: #F3E3E4;
+    --line: rgba(33,38,58,0.14);
+    --line-strong: rgba(33,38,58,0.28);
+    --font-display: 'Instrument Serif', serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+  }
+
+  body{
+    font-family: var(--font-body);
+    background: var(--paper);
+    color: var(--ink);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:inherit;}
+
+  :focus-visible{
+    outline: 2.5px solid var(--teal);
+    outline-offset: 3px;
+  }
+
+  /* ---------- background grid texture ---------- */
+  .grid-bg{
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 34px 34px;
+  }
+  .rule-bg{
+    background-image: repeating-linear-gradient(
+      to bottom, transparent 0, transparent 37px, var(--line) 37px, var(--line) 38px
+    );
+  }
+
+  /* ---------- side notebook tabs ---------- */
+  nav.tabs{
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap: 6px;
+    z-index: 200;
+    padding-left: 0;
+  }
+  nav.tabs button{
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    background: var(--paper-light);
+    border: 1px solid var(--line-strong);
+    border-left: none;
+    color: var(--ink-soft);
+    padding: 18px 9px;
+    cursor:pointer;
+    border-radius: 0 8px 8px 0;
+    transition: padding 0.18s ease, color 0.18s ease, background 0.18s ease;
+  }
+  nav.tabs button:hover{ padding-left: 15px; color: var(--ink);}
+  nav.tabs button.active{
+    background: var(--ink);
+    color: var(--paper-light);
+    border-color: var(--ink);
+    padding-left: 15px;
+  }
+
+  @media (max-width: 780px){
+    nav.tabs{
+      top: 0; left:0; right:0; height:auto;
+      flex-direction:row; justify-content:flex-start;
+      overflow-x:auto;
+      background: var(--paper-light);
+      border-bottom: 1px solid var(--line-strong);
+      padding: 8px 10px;
+      gap: 8px;
+    }
+    nav.tabs button{
+      writing-mode: horizontal-tb;
+      transform:none;
+      border-radius: 6px;
+      border-left: 1px solid var(--line-strong);
+      white-space:nowrap;
+      padding: 8px 12px;
+    }
+    nav.tabs button:hover{padding-left:12px;}
+    nav.tabs button.active{padding-left:12px;}
+    main{padding-top: 56px;}
+  }
+
+  main{ margin-left: 46px; }
+  @media (max-width: 780px){ main{margin-left:0;} }
+
+  section{
+    min-height: 100vh;
+    padding: 100px 8vw 90px;
+    position:relative;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .eyebrow{
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    display:inline-block;
+    margin-bottom: 18px;
+  }
+
+  h1,h2,h3{ font-family: var(--font-display); font-weight:400; line-height:1.05; }
+
+  /* ---------- HERO ---------- */
+  #home{
+    display:flex; flex-direction:column; justify-content:center;
+    background: var(--paper);
+  }
+  .hero-name{
+    font-size: clamp(3.2rem, 9vw, 7rem);
+    font-style: italic;
+    color: var(--ink);
+    position:relative;
+    display:inline-block;
+  }
+  .hero-tagline{
+    max-width: 620px;
+    margin-top: 26px;
+    font-size: 1.15rem;
+    color: var(--ink-soft);
+  }
+  .signature-svg{
+    display:block;
+    width: min(560px, 80vw);
+    height: 90px;
+    margin-top: 6px;
+  }
+  .signature-svg path{
+    fill:none;
+    stroke: var(--teal);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 900;
+    stroke-dashoffset: 900;
+    animation: draw 2.1s ease forwards 0.4s;
+  }
+  @keyframes draw{ to{ stroke-dashoffset: 0; } }
+
+  .hero-links{ margin-top: 40px; display:flex; gap:14px; flex-wrap:wrap; }
+  .pill{
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 9px 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--paper-light);
+    cursor:pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .pill:hover{ transform: translateY(-2px); box-shadow: 0 4px 0 var(--line-strong); }
+
+  .scroll-hint{
+    position:absolute; bottom: 46px; left: 8vw;
+    font-family: var(--font-mono); font-size:11.5px; color: var(--ink-soft);
+    display:flex; align-items:center; gap:8px;
+  }
+  .scroll-hint .dot{
+    width:6px;height:6px;border-radius:50%;background:var(--teal);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:.3} 50%{opacity:1} }
+
+  /* ---------- PROJECTS (math/finance) ---------- */
+  #projects{ background: var(--paper-dark); }
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:52px; }
+  .section-head h2{ font-size: clamp(2.2rem, 5vw, 3.4rem); }
+
+  .card-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 30px;
+  }
+  .index-card{
+    background: var(--paper-light);
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    padding: 26px 24px 22px;
+    position:relative;
+    box-shadow: 0 1px 0 var(--line-strong);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .index-card:nth-child(odd){ transform: rotate(-0.6deg); }
+  .index-card:nth-child(even){ transform: rotate(0.5deg); }
+  .index-card:hover{ transform: rotate(0deg) translateY(-4px); box-shadow: 0 10px 22px rgba(33,38,58,0.14); }
+  .tape{
+    position:absolute; top:-10px; left: 28px;
+    width: 58px; height: 20px;
+    background: rgba(201,122,43,0.35);
+    transform: rotate(-3deg);
+    border: 1px solid rgba(201,122,43,0.15);
+  }
+  .index-card.fin .tape{ background: rgba(31,111,107,0.32); border-color: rgba(31,111,107,0.15); }
+  .card-tag{
+    font-family: var(--font-mono); font-size: 11px; letter-spacing:0.08em; text-transform:uppercase;
+    color: var(--teal); margin-bottom: 10px; display:block;
+  }
+  .index-card.fin .card-tag{ color: var(--ochre); }
+  .index-card h3{ font-size: 1.5rem; margin-bottom: 8px; font-style:italic; }
+  .index-card p{ font-size: 0.94rem; color: var(--ink-soft); }
+  .card-status{
+    margin-top:16px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft);
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .card-status::before{ content:''; width:6px; height:6px; border-radius:50%; background: var(--teal); }
+
+  /* draggable note */
+  .sticky-note{
+    position:absolute;
+    width: 168px;
+    padding: 16px 14px;
+    background: var(--ochre-soft);
+    border: 1px solid rgba(201,122,43,0.4);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink);
+    box-shadow: 0 6px 14px rgba(33,38,58,0.16);
+    cursor: grab;
+    user-select:none;
+    transform: rotate(-2deg);
+    top: 40px; right: 6vw;
+    z-index: 5;
+  }
+  .sticky-note:active{ cursor:grabbing; }
+  .sticky-note .grab-hint{ display:block; margin-top:8px; opacity:0.6; font-size:10.5px;}
+
+  /* ---------- RESUME ---------- */
+  #resume{ background: var(--paper); }
+  .resume-grid{ display:grid; grid-template-columns: 1fr 1.4fr; gap: 60px; }
+  @media (max-width: 900px){ .resume-grid{ grid-template-columns:1fr; } }
+
+  .timeline-item{ padding: 20px 0 24px 24px; border-left: 2px solid var(--line-strong); position:relative; }
+  .timeline-item::before{
+    content:''; position:absolute; left:-7px; top: 24px; width:12px; height:12px; border-radius:50%;
+    background: var(--paper); border: 2px solid var(--teal);
+  }
+  .timeline-item .when{ font-family: var(--font-mono); font-size:11.5px; color: var(--ink-soft); }
+  .timeline-item h3{ font-size:1.3rem; margin: 4px 0 6px; }
+  .timeline-item p{ color: var(--ink-soft); font-size:0.94rem; }
+
+  .skills-block h3{ font-size:1.1rem; font-style:italic; margin-bottom:14px; }
+  .skill-row{ display:flex; justify-content:space-between; padding: 10px 0; border-bottom: 1px solid var(--line); font-size:0.92rem; }
+  .skill-row span:last-child{ font-family: var(--font-mono); color: var(--ink-soft); font-size: 11.5px; }
+
+  .resume-download{
+    display:inline-block; margin-top: 28px;
+    font-family: var(--font-mono); font-size: 13px;
+    padding: 12px 20px; background: var(--ink); color: var(--paper-light);
+    border-radius: 4px; text-decoration:none;
+  }
+
+  /* ---------- HOBBIES ---------- */
+  #hobbies{ background: var(--paper-dark); }
+  .hobby-tabs{ display:flex; gap:10px; margin-bottom: 40px; flex-wrap:wrap; }
+  .hobby-tab-btn{
+    font-family: var(--font-mono); font-size:12.5px; padding: 9px 16px;
+    border:1px solid var(--line-strong); border-radius: 999px; background: var(--paper-light); cursor:pointer;
+  }
+  .hobby-tab-btn.active{ background: var(--ink); color: var(--paper-light); border-color: var(--ink); }
+
+  .hobby-panel{ display:none; }
+  .hobby-panel.active{ display:block; }
+
+  .blog-post{
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: var(--paper-light);
+    margin-bottom: 16px;
+    overflow:hidden;
+  }
+  .blog-post-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 18px 22px; cursor:pointer; gap: 14px;
+  }
+  .blog-post-head h3{ font-size:1.3rem; font-style:italic; }
+  .blog-post-head .meta{ font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); white-space:nowrap;}
+  .chevron{ transition: transform 0.25s ease; color: var(--ink-soft); flex-shrink:0; }
+  .blog-post.open .chevron{ transform: rotate(180deg); }
+  .blog-post-body{
+    max-height:0; overflow:hidden; transition: max-height 0.32s ease;
+    padding: 0 22px;
+  }
+  .blog-post.open .blog-post-body{ padding: 0 22px 22px; }
+  .blog-post-body p{ color: var(--ink-soft); font-size:0.95rem; }
+
+  #panel-drawing .blog-post{ border-top: 3px solid var(--rose); }
+  #panel-instrument .blog-post{ border-top: 3px solid var(--teal); }
+  #panel-cooking .blog-post{ border-top: 3px solid var(--ochre); }
+
+  footer{
+    padding: 50px 8vw 60px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    background: var(--paper);
+  }
+</style>
+</head>
+<body>
+
+<nav class="tabs" id="tabs">
+  <button data-target="home" class="active">Home</button>
+  <button data-target="projects">Projects</button>
+  <button data-target="resume">Resume</button>
+  <button data-target="hobbies">Hobbies</button>
+</nav>
+
+<main>
+
+  <section id="home" class="grid-bg">
+    <span class="eyebrow">Personal notebook — est. 2026</span>
+    <h1 class="hero-name">Jordan Lee</h1>
+    <svg class="signature-svg" viewBox="0 0 560 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M10,60 C 40,10 60,10 75,55 C 85,80 95,80 100,50 C 105,20 115,15 125,45 C 135,75 150,80 165,40 C 175,15 190,10 205,35 L 230,35 C 260,35 260,60 230,60 C 205,60 205,35 235,32 C 300,25 340,55 400,45 C 440,38 470,20 520,30" />
+    </svg>
+    <p class="hero-tagline">I split my time between spreadsheets and sketchbooks — building models that price risk by day, and chasing melodies, recipes, and half-finished drawings by night. This is where both live.</p>
+    <div class="hero-links">
+      <button class="pill" onclick="document.getElementById('projects').scrollIntoView()">See the work →</button>
+      <button class="pill" onclick="document.getElementById('hobbies').scrollIntoView()">Read the hobby log →</button>
+    </div>
+    <div class="scroll-hint"><span class="dot"></span> scroll — everything here is a page in the same notebook</div>
+  </section>
+
+  <section id="projects" class="grid-bg">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Math &amp; Finance</span>
+        <h2>Things I've been building</h2>
+      </div>
+    </div>
+
+    <div class="sticky-note" id="stickyNote">
+      pinned note — drag me around
+      <span class="grab-hint">✎ everything on this page moves if you nudge it</span>
+    </div>
+
+    <div class="card-grid">
+      <div class="index-card">
+        <div class="tape"></div>
+        <span class="card-tag">Math</span>
+        <h3>Random walks &amp; option pricing</h3>
+        <p>A from-scratch Monte Carlo pricer for European options, comparing simulated paths against closed-form Black–Scholes to see where the approximation breaks down.</p>
+        <span class="card-status">in progress</span>
+      </div>
+      <div class="index-card fin">
+        <div class="tape"></div>
+        <span class="card-tag">Finance</span>
+        <h3>Factor model backtest</h3>
+        <p>Testing a small multi-factor stock-selection model on historical data — mostly an excuse to get comfortable with vectorized backtesting and honest performance metrics.</p>
+        <span class="card-status">write-up coming</span>
+      </div>
+      <div class="index-card">
+        <div class="tape"></div>
+        <span class="card-tag">Math</span>
+        <h3>Knot theory, visually</h3>
+        <p>Small interactive visualizations of knot invariants — an attempt to make an abstract topic feel tactile instead of purely symbolic.</p>
+        <span class="card-status">early sketch</span>
+      </div>
+      <div class="index-card fin">
+        <div class="tape"></div>
+        <span class="card-tag">Finance</span>
+        <h3>Personal cash-flow model</h3>
+        <p>A rolling forecast spreadsheet turned into a proper tool, with scenario toggles for the usual "what if I..." questions.</p>
+        <span class="card-status">shipped v1</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="resume" class="rule-bg">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Resume</span>
+        <h2>The short version</h2>
+      </div>
+      <a class="resume-download" href="#">Download full résumé (PDF) ↓</a>
+    </div>
+
+    <div class="resume-grid">
+      <div>
+        <div class="timeline-item">
+          <div class="when">2024 — present</div>
+          <h3>Quantitative Analyst</h3>
+          <p>Building and maintaining pricing and risk models; the day job that keeps the "finance" cards above honest.</p>
+        </div>
+        <div class="timeline-item">
+          <div class="when">2022 — 2024</div>
+          <h3>Data Analyst</h3>
+          <p>Started out close to the data — dashboards, forecasting, a lot of learning to explain numbers to people who didn't ask for the math.</p>
+        </div>
+        <div class="timeline-item">
+          <div class="when">2018 — 2022</div>
+          <h3>B.Sc. Mathematics</h3>
+          <p>Focused on probability and applied statistics; first got interested in finance through a stochastic processes elective.</p>
+        </div>
+      </div>
+
+      <div class="skills-block">
+        <h3>Tools &amp; skills</h3>
+        <div class="skill-row"><span>Python (numpy, pandas)</span><span>daily</span></div>
+        <div class="skill-row"><span>SQL</span><span>daily</span></div>
+        <div class="skill-row"><span>Financial modeling</span><span>daily</span></div>
+        <div class="skill-row"><span>Probability &amp; statistics</span><span>strong</span></div>
+        <div class="skill-row"><span>R</span><span>comfortable</span></div>
+        <div class="skill-row"><span>Data visualization</span><span>comfortable</span></div>
+        <div class="skill-row"><span>Watercolor &amp; ink (see: hobbies)</span><span>for fun</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="hobbies" class="grid-bg">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Off the clock</span>
+        <h2>The hobby log</h2>
+      </div>
+    </div>
+
+    <div class="hobby-tabs" id="hobbyTabs">
+      <button class="hobby-tab-btn active" data-panel="panel-drawing">Drawing</button>
+      <button class="hobby-tab-btn" data-panel="panel-instrument">Instrument</button>
+      <button class="hobby-tab-btn" data-panel="panel-cooking">Cooking</button>
+    </div>
+
+    <div class="hobby-panel active" id="panel-drawing">
+      <div class="blog-post">
+        <div class="blog-post-head">
+          <h3>Relearning to draw hands</h3>
+          <span class="meta">Jun 2026 <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+        </div>
+        <div class="blog-post-body"><p>Three weeks of daily hand studies from photo reference. The breakthrough wasn't a technique, it was slowing down enough to actually look before drawing the first line.</p></div>
+      </div>
+      <div class="blog-post">
+        <div class="blog-post-head">
+          <h3>A week of ink-only sketchbook pages</h3>
+          <span class="meta">May 2026 <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+        </div>
+        <div class="blog-post-body"><p>No pencil underdrawing allowed. Every mistake had to become part of the page. Loosened up my linework more than months of "careful" practice did.</p></div>
+      </div>
+    </div>
+
+    <div class="hobby-panel" id="panel-instrument">
+      <div class="blog-post">
+        <div class="blog-post-head">
+          <h3>Finally nailing a barre chord</h3>
+          <span class="meta">Jun 2026 <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+        </div>
+        <div class="blog-post-body"><p>Six months of buzzing strings later, something clicked in my thumb position. Writing this down so future me remembers what actually fixed it.</p></div>
+      </div>
+      <div class="blog-post">
+        <div class="blog-post-head">
+          <h3>Learning a piece by ear vs. by sheet</h3>
+          <span class="meta">Apr 2026 <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+        </div>
+        <div class="blog-post-body"><p>Tried learning the same short piece two ways in the same week. By-ear version stuck in memory faster; sheet-music version was more accurate. Probably need both.</p></div>
+      </div>
+    </div>
+
+    <div class="hobby-panel" id="panel-cooking">
+      <div class="blog-post">
+        <div class="blog-post-head">
+          <h3>The soup that finally used up the freezer</h3>
+          <span class="meta">Jul 2026 <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+        </div>
+        <div class="blog-post-body"><p>A one-pot experiment built entirely around whatever had been in the freezer too long. Turned out better than most planned recipes — writing down the ratio before I forget it.</p></div>
+      </div>
+      <div class="blog-post">
+        <div class="blog-post-head">
+          <h3>Bread, attempt number nine</h3>
+          <span class="meta">Jun 2026 <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+        </div>
+        <div class="blog-post-body"><p>Nine loaves in, the dense-crumb problem finally traced back to under-proofing, not the flour I kept blaming. Small note, big difference.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Jordan Lee — built by hand, one section at a time.</span>
+    <span>[email protected] · replace with your own details</span>
+  </footer>
+
+</main>
+
+<script>
+  // ---- tab nav: scroll spy + click ----
+  const tabButtons = document.querySelectorAll('nav.tabs button');
+  const sections = [...tabButtons].map(b => document.getElementById(b.dataset.target));
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById(btn.dataset.target).scrollIntoView({behavior: 'smooth'});
+    });
+  });
+
+  const spy = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        tabButtons.forEach(b => b.classList.toggle('active', b.dataset.target === entry.target.id));
+      }
+    });
+  }, {threshold: 0.5});
+  sections.forEach(s => spy.observe(s));
+
+  // ---- hobby sub-tabs ----
+  const hobbyTabs = document.querySelectorAll('.hobby-tab-btn');
+  hobbyTabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      hobbyTabs.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.hobby-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.panel).classList.add('active');
+    });
+  });
+
+  // ---- blog post accordion ----
+  document.querySelectorAll('.blog-post-head').forEach(head => {
+    head.addEventListener('click', () => {
+      const post = head.parentElement;
+      const body = post.querySelector('.blog-post-body');
+      const isOpen = post.classList.contains('open');
+      // close siblings within the same panel
+      post.parentElement.querySelectorAll('.blog-post').forEach(p => {
+        p.classList.remove('open');
+        p.querySelector('.blog-post-body').style.maxHeight = null;
+      });
+      if(!isOpen){
+        post.classList.add('open');
+        body.style.maxHeight = body.scrollHeight + 40 + 'px';
+      }
+    });
+  });
+
+  // ---- draggable sticky note ----
+  const note = document.getElementById('stickyNote');
+  let dragging = false, offX = 0, offY = 0;
+
+  function startDrag(x, y){
+    const rect = note.getBoundingClientRect();
+    const parentRect = note.parentElement.getBoundingClientRect();
+    offX = x - rect.left;
+    offY = y - rect.top;
+    note.style.right = 'auto';
+    note.style.left = (rect.left - parentRect.left) + 'px';
+    note.style.top = (rect.top - parentRect.top) + 'px';
+    dragging = true;
+  }
+  function moveDrag(x, y){
+    if(!dragging) return;
+    const parentRect = note.parentElement.getBoundingClientRect();
+    note.style.left = (x - offX - parentRect.left) + 'px';
+    note.style.top = (y - offY - parentRect.top) + 'px';
+  }
+  function endDrag(){ dragging = false; }
+
+  note.addEventListener('mousedown', e => startDrag(e.clientX, e.clientY));
+  window.addEventListener('mousemove', e => moveDrag(e.clientX, e.clientY));
+  window.addEventListener('mouseup', endDrag);
+
+  note.addEventListener('touchstart', e => {
+    const t = e.touches[0]; startDrag(t.clientX, t.clientY);
+  }, {passive:true});
+  window.addEventListener('touchmove', e => {
+    const t = e.touches[0]; moveDrag(t.clientX, t.clientY);
+  }, {passive:true});
+  window.addEventListener('touchend', endDrag);
+</script>
+
+</body>
+</html>

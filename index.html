@@ -603,5 +603,314 @@
   window.addEventListener('touchend', endDrag);
 </script>
 
+<style>
+  .cursor-fish{
+    position:fixed; top:0; left:0; pointer-events:none; z-index:9000;
+    width:22px; height:22px;
+    will-change: transform;
+  }
+</style>
+
+<div id="cursorSchool"></div>
+
+<script>
+(function(){
+  function cursorSVG(hue, isWhite){
+    const fill = isWhite ? '#ffffff' : `hsl(${hue}, 85%, 65%)`;
+    return `<svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 2 L4 20 L8.5 15.8 L11.3 21.8 L14 20.5 L11.2 14.5 L17.5 14.2 Z"
+        fill="${fill}" stroke="#000000" stroke-width="1.2" stroke-linejoin="round"/>
+    </svg>`;
+  }
+
+  const N = 45;
+  const school = document.getElementById('cursorSchool');
+  const fish = [];
+
+  function makeFish(startX, startY, isExtra){
+    const el = document.createElement('div');
+    el.className = 'cursor-fish';
+    school.appendChild(el);
+    const isSlow = Math.random() < 0.22;
+    const speedFactor = isSlow ? (0.35 + Math.random()*0.25) : (0.9 + Math.random()*0.6);
+    return {
+      el,
+      x: startX, y: startY,
+      vx: (Math.random()-0.5)*0.3,
+      vy: (Math.random()-0.5)*0.3,
+      wanderAngle: Math.random()*Math.PI*2,
+      squishX: 1, squishY: 1,
+      speedFactor,
+      isExtra: !!isExtra,
+      targetX: null, targetY: null,
+      hue: Math.random()*360
+    };
+  }
+
+  for(let i=0;i<N;i++){
+    fish.push(makeFish(Math.random()*window.innerWidth, Math.random()*window.innerHeight, false));
+  }
+
+  let mouseX = window.innerWidth/2, mouseY = window.innerHeight/2;
+  let lastMouseX = mouseX, lastMouseY = mouseY;
+  let mouseHasAppeared = false;
+  let lastMoveTime = performance.now();
+
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX; mouseY = e.clientY;
+    mouseHasAppeared = true;
+    lastMoveTime = performance.now();
+    if(idleActive) exitIdle();
+  });
+
+  const RADIUS = 10;
+  const FOLLOW_SPEED = 0.05;
+  const MAX_FOLLOW_SPEED = 2.2;
+  const IDLE_WANDER_SPEED = 0.35;
+
+  // ---- idle shape mode ----
+  const IDLE_TRIGGER_MS = 5 * 60 * 1000;  // 5 minutes of no input
+  const SHAPE_CYCLE_MS = 30 * 1000;       // new shape every 30 seconds
+  const SHAPES = ['heart','star','smile','word'];
+  const WORDS = ["hi", "star", "joy", "math"];
+  const MIN_SPACING = 30; // minimum px between any two target points, so cursors don't overlap
+
+  let idleActive = false;
+  let idleStartTime = 0;
+  let lastShapeChange = 0;
+  let currentShape = null;
+
+  function spacedPick(candidates, count){
+    const shuffled = candidates.slice().sort(() => Math.random()-0.5);
+    const chosen = [];
+    for(const c of shuffled){
+      if(chosen.length >= count) break;
+      let ok = true;
+      for(const p of chosen){
+        if(Math.hypot(c.x-p.x, c.y-p.y) < MIN_SPACING){ ok = false; break; }
+      }
+      if(ok) chosen.push(c);
+    }
+    let i = 0;
+    while(chosen.length < count && i < shuffled.length){
+      chosen.push(shuffled[i]);
+      i++;
+    }
+    return chosen;
+  }
+
+  function heartPoints(cx, cy){
+    const size = 20;
+    const raw = [];
+    for(let t=0; t<Math.PI*2; t+=0.05){
+      const x = 16*Math.pow(Math.sin(t),3);
+      const y = -(13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t));
+      raw.push({x: cx + x*size, y: cy + y*size});
+    }
+    return raw;
+  }
+
+  function starPoints(cx, cy){
+    const size = 170, spikes = 5;
+    const raw = [];
+    for(let t=0; t<Math.PI*2; t+=0.03){
+      const r = (Math.cos(spikes*t) > 0.55) ? size : size*0.45;
+      raw.push({x: cx + Math.cos(t)*r, y: cy + Math.sin(t)*r});
+    }
+    return raw;
+  }
+
+  function smilePoints(cx, cy){
+    const size = 150;
+    const raw = [];
+    for(let t=0; t<Math.PI*2; t+=0.08){
+      raw.push({x: cx + Math.cos(t)*size, y: cy + Math.sin(t)*size});
+    }
+    raw.push({x: cx - size*0.35, y: cy - size*0.25});
+    raw.push({x: cx + size*0.35, y: cy - size*0.25});
+    for(let t=Math.PI*0.15; t<Math.PI*0.85; t+=0.06){
+      raw.push({x: cx + Math.cos(t)*size*0.55, y: cy + size*0.15 + Math.sin(t)*size*0.4});
+    }
+    return raw;
+  }
+
+  function wordPoints(cx, cy){
+    const text = WORDS[Math.floor(Math.random()*WORDS.length)];
+    const cw = 900, ch = 220;
+    const off = document.createElement('canvas');
+    off.width = cw; off.height = ch;
+    const octx = off.getContext('2d');
+    octx.fillStyle = '#000';
+    octx.fillRect(0,0,cw,ch);
+    octx.fillStyle = '#fff';
+    octx.font = 'bold 130px sans-serif';
+    octx.textAlign = 'center';
+    octx.textBaseline = 'middle';
+    const letters = text.split('');
+    const spacing = 26;
+    const widths = letters.map(ch2 => octx.measureText(ch2).width);
+    const totalWidth = widths.reduce((a,b)=>a+b,0) + spacing*(letters.length-1);
+    let cursorX = cw/2 - totalWidth/2;
+    for(let i=0;i<letters.length;i++){
+      octx.textAlign = 'left';
+      octx.fillText(letters[i], cursorX, ch/2);
+      cursorX += widths[i] + spacing;
+    }
+    const data = octx.getImageData(0,0,cw,ch).data;
+    const raw = [];
+    for(let y=0;y<ch;y+=4){
+      for(let x=0;x<cw;x+=4){
+        const idx = (y*cw + x)*4;
+        if(data[idx] > 150) raw.push({x: cx + (x - cw/2), y: cy + (y - ch/2)});
+      }
+    }
+    return raw;
+  }
+
+  function buildShape(type, count, cx, cy){
+    let raw;
+    if(type === 'heart') raw = heartPoints(cx, cy);
+    else if(type === 'star') raw = starPoints(cx, cy);
+    else if(type === 'smile') raw = smilePoints(cx, cy);
+    else raw = wordPoints(cx, cy);
+    return spacedPick(raw, count);
+  }
+
+  function enterIdleShape(){
+    currentShape = SHAPES[Math.floor(Math.random()*SHAPES.length)];
+    const cx = lastMouseX, cy = lastMouseY;
+    const desiredCount = 55;
+    const points = buildShape(currentShape, desiredCount, cx, cy);
+
+    while(fish.length < points.length){
+      const edge = Math.floor(Math.random()*4);
+      let sx, sy;
+      if(edge===0){ sx = -30; sy = Math.random()*window.innerHeight; }
+      else if(edge===1){ sx = window.innerWidth+30; sy = Math.random()*window.innerHeight; }
+      else if(edge===2){ sx = Math.random()*window.innerWidth; sy = -30; }
+      else { sx = Math.random()*window.innerWidth; sy = window.innerHeight+30; }
+      fish.push(makeFish(sx, sy, true));
+    }
+
+    for(let i=0;i<fish.length;i++){
+      const p = points[i % points.length];
+      fish[i].targetX = p.x;
+      fish[i].targetY = p.y;
+    }
+    lastShapeChange = performance.now();
+  }
+
+  function exitIdle(){
+    idleActive = false;
+    currentShape = null;
+    for(const f of fish){
+      if(f.isExtra){
+        f.exiting = true;
+        const angle = Math.random()*Math.PI*2;
+        const dist = 700;
+        f.targetX = f.x + Math.cos(angle)*dist;
+        f.targetY = f.y + Math.sin(angle)*dist;
+      } else {
+        f.targetX = null;
+        f.targetY = null;
+      }
+    }
+  }
+
+  function step(){
+    const now = performance.now();
+
+    if(!idleActive && mouseHasAppeared && (now - lastMoveTime) > IDLE_TRIGGER_MS){
+      idleActive = true;
+      idleStartTime = now;
+      enterIdleShape();
+    }
+    if(idleActive && (now - lastShapeChange) > SHAPE_CYCLE_MS){
+      enterIdleShape();
+    }
+
+    for(let i=0;i<fish.length;i++){
+      const f = fish[i];
+
+      if(f.exiting){
+        const dx = f.targetX - f.x;
+        const dy = f.targetY - f.y;
+        f.vx += dx * 0.015;
+        f.vy += dy * 0.015;
+        f.vx *= 0.9; f.vy *= 0.9;
+      } else if(idleActive && f.targetX !== null){
+        const dx = f.targetX - f.x;
+        const dy = f.targetY - f.y;
+        f.vx += dx * 0.02;
+        f.vy += dy * 0.02;
+        f.vx *= 0.85; f.vy *= 0.85;
+      } else if(mouseHasAppeared){
+        const dx = mouseX - f.x;
+        const dy = mouseY - f.y;
+        f.vx += dx * FOLLOW_SPEED * f.speedFactor;
+        f.vy += dy * FOLLOW_SPEED * f.speedFactor;
+        f.vx *= 0.88; f.vy *= 0.88;
+        const speed = Math.hypot(f.vx, f.vy);
+        const maxAllowed = MAX_FOLLOW_SPEED * f.speedFactor;
+        if(speed > maxAllowed){
+          f.vx = f.vx/speed * maxAllowed;
+          f.vy = f.vy/speed * maxAllowed;
+        }
+      } else {
+        f.wanderAngle += (Math.random()-0.5)*0.15;
+        const targetVx = Math.cos(f.wanderAngle) * IDLE_WANDER_SPEED * f.speedFactor;
+        const targetVy = Math.sin(f.wanderAngle) * IDLE_WANDER_SPEED * f.speedFactor;
+        f.vx += (targetVx - f.vx) * 0.04;
+        f.vy += (targetVy - f.vy) * 0.04;
+      }
+
+      f.x += f.vx;
+      f.y += f.vy;
+    }
+
+    for(let i=fish.length-1;i>=0;i--){
+      const f = fish[i];
+      if(f.exiting && (f.x < -50 || f.x > window.innerWidth+50 || f.y < -50 || f.y > window.innerHeight+50)){
+        f.el.remove();
+        fish.splice(i,1);
+      }
+    }
+
+    for(const f of fish){ f.squishX = 1; f.squishY = 1; }
+    if(!idleActive){
+      for(let i=0;i<fish.length;i++){
+        for(let j=i+1;j<fish.length;j++){
+          const a = fish[i], b = fish[j];
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const dist = Math.hypot(dx,dy);
+          const minDist = RADIUS*1.7;
+          if(dist < minDist && dist > 0.001){
+            const overlap = (minDist - dist) / minDist;
+            const nx = dx/dist, ny = dy/dist;
+            a.x -= nx*overlap*0.8; a.y -= ny*overlap*0.8;
+            b.x += nx*overlap*0.8; b.y += ny*overlap*0.8;
+            const squish = 1 - overlap*0.22;
+            const stretch = 1 + overlap*0.22;
+            a.squishX = Math.min(a.squishX, squish);
+            a.squishY = Math.max(a.squishY, stretch);
+            b.squishX = Math.min(b.squishX, squish);
+            b.squishY = Math.max(b.squishY, stretch);
+          }
+        }
+      }
+    }
+
+    const idleColorT = idleActive ? Math.min((now - idleStartTime)/2000, 1) : 0;
+    for(const f of fish){
+      f.el.innerHTML = cursorSVG(f.hue, !idleActive || idleColorT < 0.05);
+      f.el.style.transform = `translate(${f.x}px, ${f.y}px) scale(${f.squishX}, ${f.squishY})`;
+    }
+
+    lastMouseX = mouseX; lastMouseY = mouseY;
+    requestAnimationFrame(step);
+  }
+  step();
+})();
+</script>
 </body>
 </html>
